@@ -1,0 +1,27 @@
+name: Mirror Release Branch to Test Repo
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  mirror-to-test-repo:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out the code from the source repository (teneo-token-oft)
+      - name: Checkout Source Repo
+        uses: actions/checkout@v3
+        with:
+          # Fetch all history for all branches and tags
+          fetch-depth: 0
+
+      # 2. Push the 'release' branch to the destination repository (test-repo)
+      - name: Mirror to test-repo
+        uses: yesolutions/mirror-action@master
+        with:
+          REMOTE: git@github.com:Teneo-Protocol/test-repo.git
+          GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
+          PUSH_ALL_REFS: "false"
+          # Arguments for the git push command
+          GIT_PUSH_ARGS: "--tags --force --prune"
+          GIT_SSH_NO_VERIFY_HOST: "true"
