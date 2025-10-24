@@ -1,4 +1,4 @@
-name: Mirror Release Branch to Test Repo
+name: Mirror Release Branch to TeneoProtocolAI Repo
 on:
   push:
     branches:
@@ -19,9 +19,10 @@ jobs:
       - name: Mirror to test-repo
         uses: yesolutions/mirror-action@master
         with:
-          REMOTE: git@github.com:Teneo-Protocol/test-repo.git
+          REMOTE: https://github.com/TeneoProtocolAI/teneo-agent-sdk.git
           GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
           PUSH_ALL_REFS: "false"
           # Arguments for the git push command
           GIT_PUSH_ARGS: "--tags --force --prune"
           GIT_SSH_NO_VERIFY_HOST: "true"
+          GIT_MIRROR_BRANCHES: "release:main"
