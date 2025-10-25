@@ -1,28 +1,26 @@
 name: Mirror Release Branch to TeneoProtocolAI Repo
+
 on:
   push:
     branches:
-      - release
+      - main
 
 jobs:
   mirror-to-test-repo:
+    if: github.repository == 'Teneo-Protocol/teneo-agent-sdk'
     runs-on: ubuntu-latest
+
     steps:
-      # 1. Check out the code from the source repository (teneo-token-oft)
       - name: Checkout Source Repo
         uses: actions/checkout@v3
         with:
-          # Fetch all history for all branches and tags
-          fetch-depth: 0
+          fetch-depth: 0  
 
-      # 2. Push the 'release' branch to the destination repository (test-repo)
-      - name: Mirror to test-repo
+      - name: Mirror main → main
         uses: yesolutions/mirror-action@master
         with:
-          REMOTE: https://github.com/TeneoProtocolAI/teneo-agent-sdk.git
+          REMOTE: git@github.com:TeneoProtocolAI/teneo-agent-sdk.git
           GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
           PUSH_ALL_REFS: "false"
-          # Arguments for the git push command
-          GIT_PUSH_ARGS: "--tags --force --prune"
+          GIT_PUSH_ARGS: "release:main --force --tags --prune"
           GIT_SSH_NO_VERIFY_HOST: "true"
-          GIT_MIRROR_BRANCHES: "release:main"
