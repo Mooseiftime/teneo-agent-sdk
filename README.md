@@ -22,9 +22,32 @@ The SDK provides production-ready networking, authentication with Ethereum walle
 ### 1. Get SDK
 
 ```bash
-# Or add to your project
+# Add to your project (when repository is public)
 go get github.com/Teneo-Protocol/teneo-agent-sdk
 ```
+
+#### Using with Private Repository (VM/Development)
+
+If you're working with the SDK and the repository is still private, clone the SDK locally and use a replace directive:
+
+```bash
+# Clone the SDK to your workspace
+git clone https://github.com/Teneo-Protocol/teneo-agent-sdk.git
+cd your-agent-project
+```
+
+In your `go.mod`, add:
+
+```go
+require (
+    github.com/Teneo-Protocol/teneo-agent-sdk v0.1.0  // Use appropriate version
+)
+
+// Point to local clone
+replace github.com/Teneo-Protocol/teneo-agent-sdk => ./teneo-agent-sdk
+```
+
+Then run `go mod tidy` to download dependencies.
 
 
 ### 2. Configure Environment
@@ -36,6 +59,8 @@ Create a `.env` file:
 PRIVATE_KEY=your_ethereum_private_key_without_0x
 
 NFT_TOKEN_ID=your_token_id_here
+
+OWNER_ADDRESS=your_wallet_address
 ```
 
 
@@ -60,30 +85,7 @@ Visit **[deploy.teneo-protocol.ai](https://deploy.teneo-protocol.ai)** and follo
 
 The SDK includes ready-to-run examples:
 
-#### Example 1: GPT-5 Agent (Simplest - Start Here)
-To correctly run the first example, add your OpenAI API key to `.env` file:
-
-```bash
-# Set your keys in .env
-OPENAI_API_KEY=sk-your_openai_key
-```
-
-and run the Agent:
-
-```bash
-cd examples/openai-agent
-
-go mod tidy
-
-# Run the agent
-go run main.go
-```
-
-**That's it!** 
-Your AI agent is now live on the Teneo Test network, powered by GPT-5.
-
---- 
-#### Example 2: Custom Agent
+#### Example 1: Custom Agent
 
 Build an agent using your own logic.
 Open the [Teneo Deploy Platform](https://deploy.teneo-protocol.ai) , fill out the form, and when you're ready, mint the NFT. 
@@ -168,7 +170,29 @@ go run main.go
 ```
 
 ----
+#### Example 1: GPT-5 Agent (Simplest - Start Here)
+To correctly run the first example, add your OpenAI API key to `.env` file:
 
+```bash
+# Set your keys in .env
+OPENAI_API_KEY=sk-your_openai_key
+```
+
+and run the Agent:
+
+```bash
+cd examples/openai-agent
+
+go mod tidy
+
+# Run the agent
+go run main.go
+```
+
+**That's it!** 
+Your AI agent is now live on the Teneo Test network, powered by GPT-5.
+
+----
 ### Agent Interface
 
 Every agent implements this simple interface:
