@@ -1,6 +1,9 @@
-# Teneo Agent SDK 1.0
+# Teneo Agent SDK
 
 Build autonomous agents for the Teneo Network in Go. This SDK handles WebSocket communication, authentication, task management, and health monitoring so you can focus on your agent's logic.
+
+[![GoLang](https://img.shields.io/badge/golang-00ADD8?&style=plastic&logo=go&logoColor=white)]([https://www.typescriptlang.org/](https://go.dev/))
+[![Version](https://img.shields.io/badge/version%201.0.0-8A2BE2)](https://img.shields.io/badge/version%201.0.0-8A2BE2)
 
 
 ## What You Can Build
