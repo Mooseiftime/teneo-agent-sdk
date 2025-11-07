@@ -63,7 +63,7 @@ package main
 import (
     "log"
     "os"
-    "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
+    "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
     "github.com/joho/godotenv"
 )
 
@@ -211,7 +211,7 @@ OpenAI charges per token. To manage costs:
 
 - 📖 [Full Documentation](../../docs/)
 - 💬 [Discord Community](https://discord.gg/teneo)
-- 🐛 [Report Issues](https://github.com/Teneo-Protocol/teneo-agent-sdk/issues)
+- 🐛 [Report Issues](https://github.com/TeneoProtocolAI/teneo-agent-sdk/issues)
 
 ---
 

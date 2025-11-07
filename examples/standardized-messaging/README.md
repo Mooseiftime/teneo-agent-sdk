@@ -84,6 +84,24 @@ sender.SendMessage("Analysis completed successfully")
 go run main.go
 ```
 
+## Rate Limiting
+
+The SDK supports rate limiting to control the number of tasks processed per minute. You can configure this using the `RATE_LIMIT_PER_MINUTE` environment variable:
+
+```bash
+# Limit to 60 tasks per minute
+RATE_LIMIT_PER_MINUTE=60
+
+# Unlimited (default)
+RATE_LIMIT_PER_MINUTE=0
+```
+
+When rate limit is exceeded, users will receive:
+- Message: "Rate limit exceeded. Please try again later."
+- Error code: `rate_limit_exceeded`
+
+Rate limiting uses a sliding window approach and is thread-safe across all agent operations.
+
 ## Integration
 
 To use these functions in your agent, implement the `StreamingTaskHandler` interface:

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // ExampleSecurityAgent demonstrates usage of standardized message functions
@@ -38,7 +38,7 @@ func (a *ExampleSecurityAgent) ProcessTaskWithStreaming(ctx context.Context, tas
 			"coverage":   "95.6%",
 		},
 	}
-	
+
 	if err := sender.SendMessageAsJSON(analysisResult); err != nil {
 		return fmt.Errorf("failed to send JSON analysis: %w", err)
 	}
@@ -74,27 +74,27 @@ Please review the detailed findings and implement the recommended fixes.`
 	// Example 3: Send array of detailed findings
 	detailedFindings := []interface{}{
 		map[string]interface{}{
-			"id":       "VULN-001",
-			"type":     "SQL Injection",
-			"severity": "high",
-			"file":     "handlers/user.go",
-			"line":     156,
+			"id":          "VULN-001",
+			"type":        "SQL Injection",
+			"severity":    "high",
+			"file":        "handlers/user.go",
+			"line":        156,
 			"description": "User input not properly sanitized before database query",
 		},
 		map[string]interface{}{
-			"id":       "VULN-002", 
-			"type":     "XSS",
-			"severity": "medium",
-			"file":     "templates/profile.html",
-			"line":     23,
+			"id":          "VULN-002",
+			"type":        "XSS",
+			"severity":    "medium",
+			"file":        "templates/profile.html",
+			"line":        23,
 			"description": "User-generated content displayed without escaping",
 		},
 		map[string]interface{}{
-			"id":       "VULN-003",
-			"type":     "Information Disclosure",
-			"severity": "low",
-			"file":     "middleware/error.go", 
-			"line":     45,
+			"id":          "VULN-003",
+			"type":        "Information Disclosure",
+			"severity":    "low",
+			"file":        "middleware/error.go",
+			"line":        45,
 			"description": "Stack traces exposed in production error responses",
 		},
 	}
@@ -115,7 +115,7 @@ func main() {
 	fmt.Println()
 	fmt.Println("This example demonstrates the new standardized message functions:")
 	fmt.Println("- SendMessageAsJSON(content interface{}) - for structured data")
-	fmt.Println("- SendMessageAsMD(content string) - for markdown formatted text") 
+	fmt.Println("- SendMessageAsMD(content string) - for markdown formatted text")
 	fmt.Println("- SendMessageAsArray(content []interface{}) - for array/list data")
 	fmt.Println("- SendMessage(content string) - backward compatibility (STRING type)")
 	fmt.Println()

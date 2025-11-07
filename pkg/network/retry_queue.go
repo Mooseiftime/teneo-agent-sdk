@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // RetryPolicy defines how messages should be retried
@@ -45,15 +45,15 @@ type RetryableMessage struct {
 
 // MessageRetryQueue manages failed messages for retry
 type MessageRetryQueue struct {
-	queue       []*RetryableMessage
-	policy      *RetryPolicy
-	sendFunc    func(*types.Message) error
-	mu          sync.Mutex
-	ctx         context.Context
-	cancel      context.CancelFunc
-	wg          sync.WaitGroup
-	processing  bool
-	metrics     *RetryMetrics
+	queue      []*RetryableMessage
+	policy     *RetryPolicy
+	sendFunc   func(*types.Message) error
+	mu         sync.Mutex
+	ctx        context.Context
+	cancel     context.CancelFunc
+	wg         sync.WaitGroup
+	processing bool
+	metrics    *RetryMetrics
 }
 
 // RetryMetrics tracks retry queue statistics
@@ -71,9 +71,9 @@ func NewMessageRetryQueue(policy *RetryPolicy, sendFunc func(*types.Message) err
 	if policy == nil {
 		policy = DefaultRetryPolicy()
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &MessageRetryQueue{
 		queue:    make([]*RetryableMessage, 0),
 		policy:   policy,
@@ -93,10 +93,10 @@ func (q *MessageRetryQueue) Start() {
 	}
 	q.processing = true
 	q.mu.Unlock()
-	
+
 	q.wg.Add(1)
 	go q.processQueue()
-	
+
 	log.Println("📮 Message retry queue started")
 }
 
@@ -109,10 +109,10 @@ func (q *MessageRetryQueue) Stop() {
 	}
 	q.processing = false
 	q.mu.Unlock()
-	
+
 	q.cancel()
 	q.wg.Wait()
-	
+
 	log.Printf("📮 Message retry queue stopped. Dropped %d messages", len(q.queue))
 }
 
@@ -120,7 +120,7 @@ func (q *MessageRetryQueue) Stop() {
 func (q *MessageRetryQueue) Enqueue(msg *types.Message, err error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	
+
 	// Check if error is retriable
 	if !q.policy.RetryableError(err) {
 		log.Printf("⚠️ Message not retriable: %v", err)
@@ -129,7 +129,7 @@ func (q *MessageRetryQueue) Enqueue(msg *types.Message, err error) {
 		})
 		return
 	}
-	
+
 	retryMsg := &RetryableMessage{
 		Message:     msg,
 		RetryCount:  0,
@@ -137,27 +137,27 @@ func (q *MessageRetryQueue) Enqueue(msg *types.Message, err error) {
 		NextRetry:   time.Now().Add(q.policy.InitialDelay),
 		Error:       err,
 	}
-	
+
 	q.queue = append(q.queue, retryMsg)
 	q.updateMetrics(func(m *RetryMetrics) {
 		m.CurrentQueueSize = len(q.queue)
 	})
-	
+
 	log.Printf("📮 Message queued for retry (queue size: %d)", len(q.queue))
 }
 
 // processQueue continuously processes messages in the retry queue
 func (q *MessageRetryQueue) processQueue() {
 	defer q.wg.Done()
-	
+
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-q.ctx.Done():
 			return
-			
+
 		case <-ticker.C:
 			q.processReadyMessages()
 		}
@@ -167,11 +167,11 @@ func (q *MessageRetryQueue) processQueue() {
 // processReadyMessages processes messages that are ready for retry
 func (q *MessageRetryQueue) processReadyMessages() {
 	q.mu.Lock()
-	
+
 	now := time.Now()
 	readyMessages := make([]*RetryableMessage, 0)
 	remainingMessages := make([]*RetryableMessage, 0)
-	
+
 	// Separate ready messages from those still waiting
 	for _, msg := range q.queue {
 		if now.After(msg.NextRetry) {
@@ -180,13 +180,13 @@ func (q *MessageRetryQueue) processReadyMessages() {
 			remainingMessages = append(remainingMessages, msg)
 		}
 	}
-	
+
 	q.queue = remainingMessages
 	q.updateMetricsLocked(func(m *RetryMetrics) {
 		m.CurrentQueueSize = len(q.queue)
 	})
 	q.mu.Unlock()
-	
+
 	// Process ready messages without holding the lock
 	for _, retryMsg := range readyMessages {
 		q.retryMessage(retryMsg)
@@ -197,12 +197,12 @@ func (q *MessageRetryQueue) processReadyMessages() {
 func (q *MessageRetryQueue) retryMessage(retryMsg *RetryableMessage) {
 	retryMsg.RetryCount++
 	retryMsg.LastAttempt = time.Now()
-	
+
 	log.Printf("🔄 Retrying message (attempt %d/%d)", retryMsg.RetryCount, q.policy.MaxRetries)
-	
+
 	// Attempt to send the message
 	err := q.sendFunc(retryMsg.Message)
-	
+
 	if err == nil {
 		// Success!
 		log.Printf("✅ Message retry successful after %d attempts", retryMsg.RetryCount)
@@ -212,13 +212,13 @@ func (q *MessageRetryQueue) retryMessage(retryMsg *RetryableMessage) {
 		})
 		return
 	}
-	
+
 	// Failed again
 	retryMsg.Error = err
 	q.updateMetrics(func(m *RetryMetrics) {
 		m.TotalRetries++
 	})
-	
+
 	// Check if we should retry again
 	if retryMsg.RetryCount >= q.policy.MaxRetries {
 		log.Printf("❌ Message dropped after %d retries: %v", retryMsg.RetryCount, err)
@@ -228,11 +228,11 @@ func (q *MessageRetryQueue) retryMessage(retryMsg *RetryableMessage) {
 		})
 		return
 	}
-	
+
 	// Calculate next retry time with exponential backoff
 	delay := q.calculateBackoff(retryMsg.RetryCount)
 	retryMsg.NextRetry = time.Now().Add(delay)
-	
+
 	// Re-queue the message
 	q.mu.Lock()
 	q.queue = append(q.queue, retryMsg)
@@ -240,22 +240,22 @@ func (q *MessageRetryQueue) retryMessage(retryMsg *RetryableMessage) {
 		m.CurrentQueueSize = len(q.queue)
 	})
 	q.mu.Unlock()
-	
+
 	log.Printf("📮 Message re-queued for retry in %v", delay)
 }
 
 // calculateBackoff calculates the backoff delay for a retry attempt
 func (q *MessageRetryQueue) calculateBackoff(retryCount int) time.Duration {
 	delay := float64(q.policy.InitialDelay)
-	
+
 	for i := 1; i < retryCount; i++ {
 		delay *= q.policy.BackoffFactor
 	}
-	
+
 	if time.Duration(delay) > q.policy.MaxDelay {
 		return q.policy.MaxDelay
 	}
-	
+
 	return time.Duration(delay)
 }
 
@@ -263,7 +263,7 @@ func (q *MessageRetryQueue) calculateBackoff(retryCount int) time.Duration {
 func (q *MessageRetryQueue) GetMetrics() RetryMetrics {
 	q.metrics.mu.RLock()
 	defer q.metrics.mu.RUnlock()
-	
+
 	return RetryMetrics{
 		TotalRetries:      q.metrics.TotalRetries,
 		SuccessfulRetries: q.metrics.SuccessfulRetries,
@@ -298,15 +298,15 @@ func (q *MessageRetryQueue) GetQueueSize() int {
 func (q *MessageRetryQueue) Clear() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	
+
 	dropped := len(q.queue)
 	q.queue = make([]*RetryableMessage, 0)
-	
+
 	q.updateMetricsLocked(func(m *RetryMetrics) {
 		m.DroppedMessages += int64(dropped)
 		m.CurrentQueueSize = 0
 	})
-	
+
 	log.Printf("📮 Retry queue cleared. Dropped %d messages", dropped)
 }
 
@@ -314,10 +314,10 @@ func (q *MessageRetryQueue) Clear() {
 func (m *RetryMetrics) String() string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	return fmt.Sprintf(
 		"RetryMetrics{Total: %d, Success: %d, Failed: %d, Dropped: %d, QueueSize: %d}",
-		m.TotalRetries, m.SuccessfulRetries, m.FailedRetries, 
+		m.TotalRetries, m.SuccessfulRetries, m.FailedRetries,
 		m.DroppedMessages, m.CurrentQueueSize,
 	)
 }

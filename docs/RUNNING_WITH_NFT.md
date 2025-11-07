@@ -36,7 +36,7 @@ import (
     "os"
     
     "github.com/joho/godotenv"
-    "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
+    "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
 )
 
 type MyAgent struct{}

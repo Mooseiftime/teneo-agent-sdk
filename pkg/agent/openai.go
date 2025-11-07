@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 	"github.com/sashabaranov/go-openai"
 )
 

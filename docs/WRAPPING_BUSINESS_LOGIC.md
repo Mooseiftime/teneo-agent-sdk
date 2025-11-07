@@ -370,7 +370,7 @@ After successfully wrapping your business logic:
 
 - **SDK Documentation**: See main [README.md](../README.md)
 - **Examples**: Check [examples/](../examples/) directory
-- **Issues**: [GitHub Issues](https://github.com/Teneo-Protocol/teneo-agent-sdk/issues)
+- **Issues**: [GitHub Issues](https://github.com/TeneoProtocolAI/teneo-agent-sdk/issues)
 - **Claude Code Docs**: [Claude Code Documentation](https://docs.claude.com/claude-code)
 
 ## Tips for Best Results

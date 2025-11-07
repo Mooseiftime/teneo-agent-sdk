@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/auth"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/auth"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

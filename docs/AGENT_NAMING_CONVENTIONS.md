@@ -51,7 +51,7 @@ The following names are reserved and cannot be used for agents:
 ### Basic Validation
 
 ```go
-import "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/naming"
+import "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/naming"
 
 // Create validator with default rules
 validator := naming.NewDefaultValidator()
@@ -86,7 +86,7 @@ normalized := validator.NormalizeName("SecurityScanner")
 ### Custom Rules
 
 ```go
-import "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+import "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 
 // Define custom rules
 customRules := &naming.AgentNamingRules{
@@ -108,7 +108,7 @@ validator := naming.NewAgentNameValidator(customRules)
 ### Agent Configuration Integration
 
 ```go
-import "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+import "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 
 // Configure agent with naming rules
 config := &types.AgentConfig{

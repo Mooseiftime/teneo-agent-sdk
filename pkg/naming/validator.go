@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // AgentNameValidator provides validation functionality for agent names
@@ -33,7 +33,7 @@ func NewStrictValidator() *AgentNameValidator {
 // ValidateName validates an agent name and returns validation result
 func (v *AgentNameValidator) ValidateName(name string) *types.AgentNameValidation {
 	result := ValidateAgentName(name, v.rules)
-	
+
 	return &types.AgentNameValidation{
 		IsValid:        result.IsValid,
 		NormalizedName: result.NormalizedName,
@@ -60,15 +60,15 @@ func (v *AgentNameValidator) ValidateAgentConfig(config *types.AgentConfig) *typ
 			Errors:  []string{"agent config cannot be nil"},
 		}
 	}
-	
+
 	// use config-specific naming rules if provided
 	rules := v.rules
 	if config.NamingRules != nil {
 		rules = convertToAgentNamingRules(config.NamingRules)
 	}
-	
+
 	result := ValidateAgentName(config.Name, rules)
-	
+
 	return &types.AgentNameValidation{
 		IsValid:        result.IsValid,
 		NormalizedName: result.NormalizedName,
@@ -82,24 +82,24 @@ func (v *AgentNameValidator) SuggestNames(invalidName string, count int) []strin
 	if count <= 0 {
 		count = 3
 	}
-	
+
 	suggestions := make([]string, 0, count)
-	
+
 	// try normalization first
 	normalized := v.NormalizeName(invalidName)
 	if validation := v.ValidateName(normalized); validation.IsValid {
 		suggestions = append(suggestions, normalized)
 	}
-	
+
 	// generate variations
 	baseName := extractBaseName(invalidName)
 	purposes := []string{"agent", "bot", "service", "handler", "processor"}
-	
+
 	for i, purpose := range purposes {
 		if len(suggestions) >= count {
 			break
 		}
-		
+
 		generated := v.GenerateName(baseName, purpose)
 		if validation := v.ValidateName(generated); validation.IsValid {
 			// avoid duplicates
@@ -107,7 +107,7 @@ func (v *AgentNameValidator) SuggestNames(invalidName string, count int) []strin
 				suggestions = append(suggestions, generated)
 			}
 		}
-		
+
 		// try with numbers
 		if len(suggestions) < count && v.rules.AllowNumbers {
 			numberedName := fmt.Sprintf("%s%d", generated, i+1)
@@ -118,7 +118,7 @@ func (v *AgentNameValidator) SuggestNames(invalidName string, count int) []strin
 			}
 		}
 	}
-	
+
 	return suggestions
 }
 
@@ -139,21 +139,21 @@ func convertToAgentNamingRules(rules *types.AgentNamingRules) *AgentNamingRules 
 	if rules == nil {
 		return DefaultAgentNamingRules
 	}
-	
+
 	// convert reserved names slice to map
 	reservedMap := make(map[string]bool)
 	for _, name := range rules.ReservedNames {
 		reservedMap[name] = true
 	}
-	
+
 	// if no reserved names provided, use defaults
 	if len(reservedMap) == 0 {
 		reservedMap = getReservedNames()
 	}
-	
+
 	// create pattern based on rules
 	pattern := createPatternFromRules(rules)
-	
+
 	return &AgentNamingRules{
 		MaxLength:        getIntOrDefault(rules.MaxLength, 50),
 		MinLength:        getIntOrDefault(rules.MinLength, 3),
@@ -172,11 +172,11 @@ func convertToAgentNamingRules(rules *types.AgentNamingRules) *AgentNamingRules 
 func createPatternFromRules(rules *types.AgentNamingRules) *regexp.Regexp {
 	// build character class
 	charClass := "a-zA-Z"
-	
+
 	if rules.AllowNumbers {
 		charClass += "0-9"
 	}
-	
+
 	var middleChars string
 	if rules.AllowHyphens {
 		middleChars += "\\-"
@@ -184,7 +184,7 @@ func createPatternFromRules(rules *types.AgentNamingRules) *regexp.Regexp {
 	if rules.AllowUnderscores {
 		middleChars += "_"
 	}
-	
+
 	// construct pattern: starts with letter, middle can have allowed chars, ends with letter or number
 	var pattern string
 	if middleChars != "" {
@@ -192,18 +192,18 @@ func createPatternFromRules(rules *types.AgentNamingRules) *regexp.Regexp {
 	} else {
 		pattern = fmt.Sprintf("^[%s]+$", charClass)
 	}
-	
+
 	// case sensitivity
 	if !rules.CaseSensitive {
 		pattern = "(?i)" + pattern
 	}
-	
+
 	compiled, err := regexp.Compile(pattern)
 	if err != nil {
 		// fallback to default pattern
 		return DefaultAgentNamingRules.AllowedPattern
 	}
-	
+
 	return compiled
 }
 
@@ -219,7 +219,7 @@ func getIntOrDefault(value, defaultValue int) int {
 func extractBaseName(name string) string {
 	// simple extraction - remove common suffixes and prefixes
 	cleanName := name
-	
+
 	// remove common prefixes
 	prefixes := []string{"teneo-", "agent-", "bot-", "service-"}
 	for _, prefix := range prefixes {
@@ -228,7 +228,7 @@ func extractBaseName(name string) string {
 			break
 		}
 	}
-	
+
 	// remove common suffixes
 	suffixes := []string{"-agent", "-bot", "-service", "-handler"}
 	for _, suffix := range suffixes {
@@ -237,7 +237,7 @@ func extractBaseName(name string) string {
 			break
 		}
 	}
-	
+
 	return cleanName
 }
 

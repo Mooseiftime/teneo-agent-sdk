@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // TaskCoordinator manages task execution and coordination

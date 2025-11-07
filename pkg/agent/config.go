@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // Config represents the configuration for a Teneo agent

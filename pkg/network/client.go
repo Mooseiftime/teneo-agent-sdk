@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 	"github.com/gorilla/websocket"
 )
 
@@ -28,12 +28,12 @@ type NetworkClient struct {
 	sendChan        chan *types.Message
 	receiveChan     chan *types.Message
 	wg              sync.WaitGroup // For goroutine lifecycle management
-	
+
 	// Resilience components
-	circuitBreaker  *CircuitBreaker
-	retryQueue      *MessageRetryQueue
-	healthMonitor   *HealthMonitor
-	supervisor      *GoroutineSupervisor
+	circuitBreaker *CircuitBreaker
+	retryQueue     *MessageRetryQueue
+	healthMonitor  *HealthMonitor
+	supervisor     *GoroutineSupervisor
 }
 
 // MessageHandler defines the function signature for message handlers
@@ -84,21 +84,21 @@ func NewNetworkClient(config *Config) *NetworkClient {
 		delay:       config.ReconnectDelay,
 		backoffFunc: exponentialBackoff,
 	}
-	
+
 	// Initialize resilience components
 	client.circuitBreaker = NewCircuitBreaker(3, 30*time.Second)
 	client.circuitBreaker.SetStateChangeHandler(func(from, to CircuitState) {
 		log.Printf("🔌 Circuit breaker state changed: %s → %s", from, to)
 	})
-	
+
 	client.retryQueue = NewMessageRetryQueue(DefaultRetryPolicy(), client.sendMessageDirect)
-	
+
 	client.healthMonitor = NewHealthMonitor(10 * time.Second)
 	client.healthMonitor.SetHealthCheckFunc(client.healthCheck)
 	client.healthMonitor.SetStatusChangeHandler(func(old, new HealthStatus) {
 		log.Printf("🏥 Health status changed: %s → %s", old, new)
 	})
-	
+
 	client.supervisor = NewGoroutineSupervisor(ctx)
 
 	return client
@@ -141,7 +141,7 @@ func (c *NetworkClient) Connect() error {
 	if err := c.supervisor.Start(); err != nil {
 		return fmt.Errorf("failed to start supervisor: %w", err)
 	}
-	
+
 	// Start resilience components
 	c.retryQueue.Start()
 	c.healthMonitor.Start()
@@ -158,42 +158,42 @@ func (c *NetworkClient) Disconnect() error {
 		c.mu.Unlock()
 		return nil
 	}
-	
+
 	c.running = false
 	c.authenticated = false
 	oldConn := c.conn
 	c.conn = nil
 	c.mu.Unlock()
-	
+
 	// Stop resilience components
 	c.supervisor.Stop()
 	c.retryQueue.Stop()
 	c.healthMonitor.Stop()
 	c.healthMonitor.RecordConnectionLost()
-	
+
 	// Send close message
 	if oldConn != nil {
-		oldConn.WriteMessage(websocket.CloseMessage, 
+		oldConn.WriteMessage(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		oldConn.Close()
 	}
-	
+
 	// Cancel context and wait for goroutines
 	c.cancel()
-	
+
 	done := make(chan struct{})
 	go func() {
 		c.wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		log.Println("✅ All goroutines stopped gracefully")
 	case <-time.After(5 * time.Second):
 		log.Println("⚠️ Timeout waiting for goroutines to stop")
 	}
-	
+
 	log.Println("🔌 Disconnected from WebSocket server")
 	return nil
 }
@@ -409,7 +409,7 @@ func (c *NetworkClient) attemptReconnection() {
 	if err := c.reconnect(); err != nil {
 		log.Printf("❌ Reconnection failed: %v", err)
 		c.healthMonitor.RecordReconnectAttempt(false)
-		
+
 		// Try again if we haven't exceeded max attempts
 		if c.reconnector.ShouldReconnect() {
 			atomic.StoreInt32(&c.reconnecting, 0) // Reset flag before next attempt
@@ -534,36 +534,36 @@ func (c *NetworkClient) healthCheck() error {
 	if conn == nil {
 		return fmt.Errorf("connection is nil")
 	}
-	
+
 	c.mu.RLock()
 	connected := c.running
 	authenticated := c.authenticated
 	c.mu.RUnlock()
-	
+
 	if !connected {
 		return fmt.Errorf("not connected")
 	}
-	
+
 	if !authenticated {
 		return fmt.Errorf("not authenticated")
 	}
-	
+
 	return nil
 }
 
 // registerGoroutines registers all goroutines with the supervisor
 func (c *NetworkClient) registerGoroutines() {
 	policy := DefaultRestartPolicy()
-	
+
 	// Register read messages goroutine
-	c.supervisor.Register("read-messages", "Message Reader", 
+	c.supervisor.Register("read-messages", "Message Reader",
 		func(ctx context.Context) error {
 			c.wg.Add(1)
 			defer c.wg.Done()
 			c.readMessages()
 			return nil
 		}, policy)
-	
+
 	// Register write messages goroutine
 	c.supervisor.Register("write-messages", "Message Writer",
 		func(ctx context.Context) error {
@@ -572,7 +572,7 @@ func (c *NetworkClient) registerGoroutines() {
 			c.writeMessages()
 			return nil
 		}, policy)
-	
+
 	// Register process messages goroutine
 	c.supervisor.Register("process-messages", "Message Processor",
 		func(ctx context.Context) error {
@@ -581,7 +581,7 @@ func (c *NetworkClient) registerGoroutines() {
 			c.processMessages()
 			return nil
 		}, policy)
-	
+
 	// Register ping/pong handler
 	c.supervisor.Register("ping-pong", "Ping/Pong Handler",
 		func(ctx context.Context) error {

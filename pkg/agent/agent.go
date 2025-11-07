@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/auth"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/nft"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/auth"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/nft"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // Agent represents a Teneo agent instance

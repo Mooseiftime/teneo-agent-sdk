@@ -47,7 +47,7 @@ go run main.go
 ## Usage in Code
 
 ```go
-import "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/naming"
+import "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/naming"
 
 // Basic validation
 validator := naming.NewDefaultValidator()

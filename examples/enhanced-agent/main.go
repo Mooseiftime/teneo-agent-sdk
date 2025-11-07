@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/version"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/version"
 	"github.com/joho/godotenv"
 )
 
@@ -1143,7 +1143,7 @@ Beginning comprehensive analysis of your content using **standardized message fu
 			"description": "Sentences show balanced complexity with varied structure",
 		},
 		map[string]interface{}{
-			"category":    "linguistic_patterns", 
+			"category":    "linguistic_patterns",
 			"finding":     "vocabulary_sophistication",
 			"value":       "high",
 			"confidence":  0.92,
@@ -1152,7 +1152,7 @@ Beginning comprehensive analysis of your content using **standardized message fu
 		map[string]interface{}{
 			"category":    "content_structure",
 			"finding":     "logical_organization",
-			"value":       "excellent", 
+			"value":       "excellent",
 			"confidence":  0.88,
 			"description": "Content follows clear logical progression",
 		},
@@ -1399,7 +1399,7 @@ func main() {
 	// Display SDK version banner
 	log.Printf("%s", version.GetBanner())
 	log.Printf("🚀 %s", version.GetFullVersionString())
-	
+
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Printf("⚠️ Warning: .env file not found, using environment variables")
@@ -1448,7 +1448,7 @@ func main() {
 	// Check NFT configuration - if NFT_TOKEN_ID is empty, mint new NFT
 	var mintNewNFT bool
 	var existingTokenID uint64
-	
+
 	if tokenIDStr := os.Getenv("NFT_TOKEN_ID"); tokenIDStr != "" {
 		// Use existing NFT token ID
 		if id, err := strconv.ParseUint(tokenIDStr, 10, 64); err == nil {
@@ -1495,8 +1495,8 @@ func main() {
 		AgentHandler: agentHandler,
 		Mint:         mintNewNFT,
 		TokenID:      existingTokenID,
-		BackendURL:   os.Getenv("BACKEND_URL"),   // Optional, defaults to http://localhost:8080
-		RPCEndpoint:  os.Getenv("RPC_ENDPOINT"),  // Optional for blockchain interaction
+		BackendURL:   os.Getenv("BACKEND_URL"),  // Optional, defaults to http://localhost:8080
+		RPCEndpoint:  os.Getenv("RPC_ENDPOINT"), // Optional for blockchain interaction
 	}
 
 	// Create enhanced agent

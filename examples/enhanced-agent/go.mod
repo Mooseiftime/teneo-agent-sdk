@@ -5,11 +5,11 @@ go 1.24.0
 toolchain go1.24.9
 
 require (
-	github.com/Teneo-Protocol/teneo-agent-sdk v0.0.0-00010101000000-000000000000
+	github.com/TeneoProtocolAI/teneo-agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/joho/godotenv v1.5.1
 )
 
-replace github.com/Teneo-Protocol/teneo-agent-sdk => ../../
+replace github.com/TeneoProtocolAI/teneo-agent-sdk => ../../
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect

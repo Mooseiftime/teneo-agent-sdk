@@ -20,7 +20,7 @@ Before you begin, you'll need:
 ## Installation
 
 ```bash
-go get github.com/Teneo-Protocol/teneo-agent-sdk
+go get github.com/TeneoProtocolAI/teneo-agent-sdk
 go get github.com/sashabaranov/go-openai
 ```
 
@@ -33,7 +33,7 @@ package main
 
 import (
     "log"
-    "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
+    "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
 )
 
 func main() {
@@ -72,7 +72,7 @@ package main
 import (
     "log"
     "os"
-    "github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
+    "github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
     "github.com/joho/godotenv"
 )
 
@@ -398,7 +398,7 @@ myAgent, _ := agent.NewSimpleOpenAIAgent(&agent.SimpleOpenAIAgentConfig{
 
 - 📖 Documentation: [docs.teneo.pro](https://docs.teneo.pro)
 - 💬 Discord: [Join our community](https://discord.gg/teneo)
-- 🐛 Issues: [GitHub Issues](https://github.com/Teneo-Protocol/teneo-agent-sdk/issues)
+- 🐛 Issues: [GitHub Issues](https://github.com/TeneoProtocolAI/teneo-agent-sdk/issues)
 
 ---
 

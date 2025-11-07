@@ -12,12 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/auth"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/health"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/network"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/nft"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/auth"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/health"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/network"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/nft"
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
 )
 
 // EnhancedAgent represents a fully functional Teneo network agent with all capabilities
@@ -40,14 +40,14 @@ type EnhancedAgent struct {
 type EnhancedAgentConfig struct {
 	Config       *Config
 	AgentHandler types.AgentHandler
-	
+
 	// NFT Minting Options
-	Mint         bool    // If true, mint new NFT; if false, use TokenID
-	TokenID      uint64  // Required if Mint is false
-	
+	Mint    bool   // If true, mint new NFT; if false, use TokenID
+	TokenID uint64 // Required if Mint is false
+
 	// Backend Configuration
-	BackendURL   string  // Default from env or "http://localhost:8080"
-	RPCEndpoint  string  // Ethereum RPC endpoint
+	BackendURL  string // Default from env or "http://localhost:8080"
+	RPCEndpoint string // Ethereum RPC endpoint
 }
 
 // NewEnhancedAgent creates a new enhanced agent with network capabilities
@@ -96,7 +96,7 @@ func NewEnhancedAgent(config *EnhancedAgentConfig) (*EnhancedAgent, error) {
 		}
 
 		log.Printf("🎨 Minting NFT for agent: %s", config.Config.Name)
-		
+
 		// Mint NFT - this will:
 		// 1. Send metadata to backend (backend uploads to IPFS)
 		// 2. Get signature from backend
@@ -108,7 +108,7 @@ func NewEnhancedAgent(config *EnhancedAgentConfig) (*EnhancedAgent, error) {
 
 		config.TokenID = tokenID
 		log.Printf("✅ Successfully minted NFT with token ID: %d", tokenID)
-		
+
 		// Store token ID in environment for future use
 		os.Setenv("NFT_TOKEN_ID", fmt.Sprintf("%d", tokenID))
 	} else {
@@ -132,16 +132,16 @@ func NewEnhancedAgent(config *EnhancedAgentConfig) (*EnhancedAgent, error) {
 			Capabilities: config.Config.Capabilities,
 			AgentID:      generateAgentID(config.Config.Name),
 		}
-		
+
 		hash := nft.GenerateMetadataHash(metadata)
 		log.Printf("📋 Using existing NFT token ID: %d with metadata hash: %s", config.TokenID, hash)
-		
+
 		// Send metadata hash to backend
 		minter, err := nft.NewNFTMinter(config.BackendURL, config.RPCEndpoint, config.Config.PrivateKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create NFT minter: %w", err)
 		}
-		
+
 		walletAddress := getAddressFromPrivateKey(config.Config.PrivateKey)
 		err = minter.SendMetadataHashToBackend(hash, config.TokenID, walletAddress)
 		if err != nil {
@@ -519,13 +519,13 @@ func getAddressFromPrivateKey(privateKeyHex string) string {
 	if err != nil {
 		return ""
 	}
-	
+
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
 		return ""
 	}
-	
+
 	address := crypto.PubkeyToAddress(*publicKeyECDSA)
 	return address.Hex()
 }

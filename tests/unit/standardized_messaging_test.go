@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/types"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 )
 
 // TestMessageSender implements MessageSender for testing
@@ -59,17 +59,17 @@ func (t *TestMessageSender) sendStandardizedMessage(msgType string, content inte
 		ContentType: msgType,
 		Content:     content,
 	}
-	
+
 	// marshal the standardized message
 	contentJSON, err := json.Marshal(standardizedMsg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal standardized message: %w", err)
 	}
-	
+
 	// simulate sending (store for testing)
 	message := fmt.Sprintf("[%s:%s] %s", t.taskID, t.room, string(contentJSON))
 	t.messages = append(t.messages, message)
-	
+
 	return nil
 }
 
@@ -92,22 +92,22 @@ func (a *TestAgent) ProcessTaskWithStreaming(ctx context.Context, task, room str
 	if err := sender.SendMessage("Testing standardized message functions"); err != nil {
 		return fmt.Errorf("string message test failed: %w", err)
 	}
-	
+
 	// Test 2: JSON message
 	jsonData := map[string]interface{}{
 		"test_suite": "standardized_messaging",
-		"timestamp": time.Now().Format(time.RFC3339),
-		"status": "running",
+		"timestamp":  time.Now().Format(time.RFC3339),
+		"status":     "running",
 		"results": map[string]interface{}{
 			"total_tests": 4,
-			"passed": 0,
+			"passed":      0,
 		},
 	}
-	
+
 	if err := sender.SendMessageAsJSON(jsonData); err != nil {
 		return fmt.Errorf("JSON message test failed: %w", err)
 	}
-	
+
 	// Test 3: Markdown message
 	markdownContent := `# Test Report
 
@@ -118,66 +118,66 @@ func (a *TestAgent) ProcessTaskWithStreaming(ctx context.Context, task, room str
 
 ### Next
 Array message testing.`
-	
+
 	if err := sender.SendMessageAsMD(markdownContent); err != nil {
 		return fmt.Errorf("markdown message test failed: %w", err)
 	}
-	
+
 	// Test 4: Array message
 	arrayData := []interface{}{
 		map[string]interface{}{
-			"test": "string_message",
+			"test":   "string_message",
 			"status": "passed",
 		},
 		map[string]interface{}{
-			"test": "json_message",
-			"status": "passed", 
+			"test":   "json_message",
+			"status": "passed",
 		},
 		map[string]interface{}{
-			"test": "markdown_message",
+			"test":   "markdown_message",
 			"status": "passed",
 		},
 		"simple_string_item",
 		42,
 		true,
 	}
-	
+
 	if err := sender.SendMessageAsArray(arrayData); err != nil {
 		return fmt.Errorf("array message test failed: %w", err)
 	}
-	
+
 	// Final message
 	if err := sender.SendMessage("✅ All tests completed successfully!"); err != nil {
 		return fmt.Errorf("final message test failed: %w", err)
 	}
-	
+
 	return nil
 }
 
 func TestStandardizedMessageFunctions(t *testing.T) {
 	log.Println("🚀 Testing Standardized Message Functions")
-	
+
 	// Create test components
 	taskID := "test-001"
 	room := "test-room"
 	testSender := NewTestMessageSender(taskID, room)
 	testAgent := &TestAgent{}
-	
+
 	// Run test
 	ctx := context.Background()
 	task := "test task"
-	
+
 	err := testAgent.ProcessTaskWithStreaming(ctx, task, room, testSender)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	
+
 	// Validate results
 	messages := testSender.GetMessages()
 	if len(messages) != 5 {
 		t.Errorf("Expected 5 messages, got %d", len(messages))
 	}
-	
+
 	// Validate message types
 	expectedTypes := []string{"STRING", "JSON", "MD", "ARRAY", "STRING"}
 	for i, expectedType := range expectedTypes {
@@ -201,17 +201,17 @@ func TestStandardizedMessageFunctions(t *testing.T) {
 
 func TestMessageSenderStringMessages(t *testing.T) {
 	sender := NewTestMessageSender("test", "room")
-	
+
 	err := sender.SendMessage("Test message")
 	if err != nil {
 		t.Fatalf("SendMessage failed: %v", err)
 	}
-	
+
 	messages := sender.GetMessages()
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 message, got %d", len(messages))
 	}
-	
+
 	// Parse and validate
 	jsonPart := messages[0][len("[test:room] "):]
 	var msg types.StandardizedMessage
@@ -219,11 +219,11 @@ func TestMessageSenderStringMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse message: %v", err)
 	}
-	
+
 	if msg.ContentType != types.StandardMessageTypeString {
 		t.Errorf("Expected STRING type, got %s", msg.ContentType)
 	}
-	
+
 	if msg.Content != "Test message" {
 		t.Errorf("Expected 'Test message', got %v", msg.Content)
 	}
@@ -231,7 +231,7 @@ func TestMessageSenderStringMessages(t *testing.T) {
 
 func TestMessageSenderJSONMessages(t *testing.T) {
 	sender := NewTestMessageSender("test", "room")
-	
+
 	testData := map[string]interface{}{
 		"key1": "value1",
 		"key2": 42,
@@ -240,17 +240,17 @@ func TestMessageSenderJSONMessages(t *testing.T) {
 			"inner": "value",
 		},
 	}
-	
+
 	err := sender.SendMessageAsJSON(testData)
 	if err != nil {
 		t.Fatalf("SendMessageAsJSON failed: %v", err)
 	}
-	
+
 	messages := sender.GetMessages()
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 message, got %d", len(messages))
 	}
-	
+
 	// Parse and validate
 	jsonPart := messages[0][len("[test:room] "):]
 	var msg types.StandardizedMessage
@@ -258,17 +258,17 @@ func TestMessageSenderJSONMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse message: %v", err)
 	}
-	
+
 	if msg.ContentType != types.StandardMessageTypeJSON {
 		t.Errorf("Expected JSON type, got %s", msg.ContentType)
 	}
-	
+
 	// Validate content structure
 	contentMap, ok := msg.Content.(map[string]interface{})
 	if !ok {
 		t.Fatalf("Expected content to be map[string]interface{}, got %T", msg.Content)
 	}
-	
+
 	if contentMap["key1"] != "value1" {
 		t.Errorf("Expected key1='value1', got %v", contentMap["key1"])
 	}
@@ -276,7 +276,7 @@ func TestMessageSenderJSONMessages(t *testing.T) {
 
 func TestMessageSenderMarkdownMessages(t *testing.T) {
 	sender := NewTestMessageSender("test", "room")
-	
+
 	markdown := `# Test Header
 
 This is **bold** and *italic* text.
@@ -284,17 +284,17 @@ This is **bold** and *italic* text.
 ## List
 - Item 1
 - Item 2`
-	
+
 	err := sender.SendMessageAsMD(markdown)
 	if err != nil {
 		t.Fatalf("SendMessageAsMD failed: %v", err)
 	}
-	
+
 	messages := sender.GetMessages()
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 message, got %d", len(messages))
 	}
-	
+
 	// Parse and validate
 	jsonPart := messages[0][len("[test:room] "):]
 	var msg types.StandardizedMessage
@@ -302,11 +302,11 @@ This is **bold** and *italic* text.
 	if err != nil {
 		t.Fatalf("Failed to parse message: %v", err)
 	}
-	
+
 	if msg.ContentType != types.StandardMessageTypeMD {
 		t.Errorf("Expected MD type, got %s", msg.ContentType)
 	}
-	
+
 	if msg.Content != markdown {
 		t.Errorf("Markdown content mismatch")
 	}
@@ -314,7 +314,7 @@ This is **bold** and *italic* text.
 
 func TestMessageSenderArrayMessages(t *testing.T) {
 	sender := NewTestMessageSender("test", "room")
-	
+
 	arrayData := []interface{}{
 		"string item",
 		42,
@@ -322,17 +322,17 @@ func TestMessageSenderArrayMessages(t *testing.T) {
 		map[string]interface{}{"key": "value"},
 		[]string{"nested", "array"},
 	}
-	
+
 	err := sender.SendMessageAsArray(arrayData)
 	if err != nil {
 		t.Fatalf("SendMessageAsArray failed: %v", err)
 	}
-	
+
 	messages := sender.GetMessages()
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 message, got %d", len(messages))
 	}
-	
+
 	// Parse and validate
 	jsonPart := messages[0][len("[test:room] "):]
 	var msg types.StandardizedMessage
@@ -340,20 +340,20 @@ func TestMessageSenderArrayMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse message: %v", err)
 	}
-	
+
 	if msg.ContentType != types.StandardMessageTypeArray {
 		t.Errorf("Expected ARRAY type, got %s", msg.ContentType)
 	}
-	
+
 	contentArray, ok := msg.Content.([]interface{})
 	if !ok {
 		t.Fatalf("Expected content to be []interface{}, got %T", msg.Content)
 	}
-	
+
 	if len(contentArray) != 5 {
 		t.Errorf("Expected 5 array items, got %d", len(contentArray))
 	}
-	
+
 	if contentArray[0] != "string item" {
 		t.Errorf("Expected first item to be 'string item', got %v", contentArray[0])
 	}

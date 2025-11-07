@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Teneo-Protocol/teneo-agent-sdk/pkg/agent"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
 	"github.com/joho/godotenv"
 )
 
