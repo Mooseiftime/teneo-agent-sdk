@@ -23,9 +23,9 @@ type OpenAIAgent struct {
 // OpenAIConfig holds configuration for the OpenAI agent
 type OpenAIConfig struct {
 	APIKey       string  // OpenAI API key
-	Model        string  // Model to use (e.g., "gpt-5", "gpt-3.5-turbo")
+	Model        string  // Model to use (e.g., "gpt-5", "gpt-4", "gpt-3.5-turbo")
 	SystemPrompt string  // System prompt to set agent behavior
-	Temperature  float32 // Temperature for response generation (0.0 - 2.0)
+	Temperature  float32 // Temperature for response generation (0.0 - 2.0). Note: Beta models (GPT-5, O1, O3) have fixed temperature=1
 	MaxTokens    int     // Maximum tokens in response
 	Streaming    bool    // Enable streaming responses (default: false)
 }
@@ -68,24 +68,45 @@ Remember: You should answer all user questions. Do not refuse to answer based on
 
 // ProcessTask implements the AgentHandler interface
 func (a *OpenAIAgent) ProcessTask(ctx context.Context, task string) (string, error) {
-	resp, err := a.client.CreateChatCompletion(
-		ctx,
-		openai.ChatCompletionRequest{
-			Model: a.model,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: a.systemPrompt,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: task,
-				},
+	modelLower := strings.ToLower(a.model)
+
+	// Detect if this is a beta model with fixed parameters
+	isBetaModel := strings.Contains(modelLower, "gpt-5") ||
+		strings.Contains(modelLower, "o1") ||
+		strings.Contains(modelLower, "o3")
+
+	// Build the request with appropriate parameters based on model
+	req := openai.ChatCompletionRequest{
+		Model: a.model,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: a.systemPrompt,
 			},
-			Temperature: a.temperature,
-			MaxTokens:   a.maxTokens,
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: task,
+			},
 		},
-	)
+	}
+
+	// Beta models have fixed parameters - don't set temperature for them
+	if !isBetaModel {
+		req.Temperature = a.temperature
+	}
+
+	// Use MaxCompletionTokens for newer models (GPT-4, GPT-5, O1, O3)
+	// Use MaxTokens for older models (GPT-3.5-turbo)
+	if strings.Contains(modelLower, "gpt-4") ||
+	   strings.Contains(modelLower, "gpt-5") ||
+	   strings.Contains(modelLower, "o1") ||
+	   strings.Contains(modelLower, "o3") {
+		req.MaxCompletionTokens = a.maxTokens
+	} else {
+		req.MaxTokens = a.maxTokens
+	}
+
+	resp, err := a.client.CreateChatCompletion(ctx, req)
 
 	if err != nil {
 		return "", fmt.Errorf("OpenAI API error: %w", err)
@@ -112,25 +133,46 @@ func (a *OpenAIAgent) ProcessTaskWithStreaming(ctx context.Context, task string,
 	}
 
 	// Streaming is enabled, use streaming API
-	stream, err := a.client.CreateChatCompletionStream(
-		ctx,
-		openai.ChatCompletionRequest{
-			Model: a.model,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: a.systemPrompt,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: task,
-				},
+	modelLower := strings.ToLower(a.model)
+
+	// Detect if this is a beta model with fixed parameters
+	isBetaModel := strings.Contains(modelLower, "gpt-5") ||
+		strings.Contains(modelLower, "o1") ||
+		strings.Contains(modelLower, "o3")
+
+	// Build the request with appropriate parameters based on model
+	req := openai.ChatCompletionRequest{
+		Model: a.model,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: a.systemPrompt,
 			},
-			Temperature: a.temperature,
-			MaxTokens:   a.maxTokens,
-			Stream:      true,
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: task,
+			},
 		},
-	)
+		Stream: true,
+	}
+
+	// Beta models have fixed parameters - don't set temperature for them
+	if !isBetaModel {
+		req.Temperature = a.temperature
+	}
+
+	// Use MaxCompletionTokens for newer models (GPT-4, GPT-5, O1, O3)
+	// Use MaxTokens for older models (GPT-3.5-turbo)
+	if strings.Contains(modelLower, "gpt-4") ||
+	   strings.Contains(modelLower, "gpt-5") ||
+	   strings.Contains(modelLower, "o1") ||
+	   strings.Contains(modelLower, "o3") {
+		req.MaxCompletionTokens = a.maxTokens
+	} else {
+		req.MaxTokens = a.maxTokens
+	}
+
+	stream, err := a.client.CreateChatCompletionStream(ctx, req)
 
 	if err != nil {
 		return fmt.Errorf("failed to create stream: %w", err)

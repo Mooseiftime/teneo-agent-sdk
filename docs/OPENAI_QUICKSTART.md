@@ -165,21 +165,6 @@ myAgent, err := agent.NewSimpleOpenAIAgent(&agent.SimpleOpenAIAgentConfig{
     // Define agent personality
     SystemPrompt: `You are a professional customer support AI.
 Always be friendly, helpful, and solution-oriented.`,
-
-    // Specify capabilities
-    Capabilities: []string{
-        "customer_support",
-        "technical_help",
-        "product_info",
-    },
-
-    // NFT Configuration
-    Mint:    true,  // Auto-create NFT, or...
-    TokenID: 12345, // ...use existing NFT
-
-    // Network settings
-    WebSocketURL: "wss://backend.developer.chatroom.teneo-protocol.ai/ws",
-    Room:         "support-agents",
 })
 ```
 
@@ -196,11 +181,6 @@ Always be friendly, helpful, and solution-oriented.`,
 | `Temperature` | float32 | No | 0.7 | Response creativity (0.0-2.0) |
 | `MaxTokens` | int | No | 1000 | Max tokens per response |
 | `Streaming` | bool | No | false | Enable word-by-word streaming |
-| `Capabilities` | []string | No | Auto-generated | Agent capability tags |
-| `Mint` | bool | No | Auto (see below) | Auto-mint NFT for agent |
-| `TokenID` | uint64 | No | Auto (see below) | Existing NFT token ID |
-| `WebSocketURL` | string | No | Production endpoint | Teneo network WebSocket URL |
-| `Room` | string | No | "" | Specific room to join |
 
 ## NFT Configuration (Automatic!)
 
@@ -396,9 +376,8 @@ myAgent, _ := agent.NewSimpleOpenAIAgent(&agent.SimpleOpenAIAgentConfig{
 
 ## Support
 
-- 📖 Documentation: [docs.teneo.pro](https://docs.teneo.pro)
-- 💬 Discord: [Join our community](https://discord.gg/teneo)
-- 🐛 Issues: [GitHub Issues](https://github.com/TeneoProtocolAI/teneo-agent-sdk/issues)
+- **Discord**: [Join our community](https://discord.com/invite/teneoprotocol)
+- **Issues**: [GitHub Issues](https://github.com/TeneoProtocolAI/teneo-agent-sdk/issues)
 
 ---
 

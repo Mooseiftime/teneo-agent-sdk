@@ -27,6 +27,7 @@ type SimpleOpenAIAgentConfig struct {
 	SystemPrompt string
 
 	// Optional: Temperature 0.0-2.0 (defaults to 0.7)
+	// Note: Beta models (GPT-5, O1, O3) have fixed temperature=1 and will ignore this setting
 	Temperature float32
 
 	// Optional: Max tokens per response (defaults to 1000)
