@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/auth"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/cache"
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/health"
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/network"
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/nft"
@@ -29,6 +30,7 @@ type EnhancedAgent struct {
 	protocolHandler *network.ProtocolHandler
 	taskCoordinator *network.TaskCoordinator
 	healthServer    *health.Server
+	agentCache      cache.AgentCache
 	running         bool
 	startTime       time.Time
 	mu              sync.RWMutex
@@ -202,6 +204,37 @@ func NewEnhancedAgent(config *EnhancedAgentConfig) (*EnhancedAgent, error) {
 		agent.taskCoordinator.SetRateLimit(config.Config.RateLimitPerMinute)
 	}
 
+	// Initialize Redis cache if enabled
+	if config.Config.RedisEnabled {
+		log.Printf("🗄️  Initializing Redis cache at %s", config.Config.RedisAddress)
+
+		// Set default key prefix if not provided
+		keyPrefix := config.Config.RedisKeyPrefix
+		if keyPrefix == "" {
+			keyPrefix = fmt.Sprintf("teneo:agent:%s:", strings.ReplaceAll(strings.ToLower(config.Config.Name), " ", "_"))
+		}
+
+		redisConfig := &cache.RedisConfig{
+			Address:   config.Config.RedisAddress,
+			Password:  config.Config.RedisPassword,
+			DB:        config.Config.RedisDB,
+			KeyPrefix: keyPrefix,
+		}
+
+		redisCache, err := cache.NewRedisCache(redisConfig)
+		if err != nil {
+			// Log error but don't fail - cache is optional
+			log.Printf("⚠️  Failed to initialize Redis cache: %v (continuing without cache)", err)
+			agent.agentCache = &cache.NoOpCache{}
+		} else {
+			agent.agentCache = redisCache
+			log.Printf("✅ Redis cache initialized successfully with prefix: %s", keyPrefix)
+		}
+	} else {
+		// Use no-op cache when Redis is disabled
+		agent.agentCache = &cache.NoOpCache{}
+	}
+
 	// Initialize health server if enabled
 	if config.Config.HealthEnabled {
 		agentInfo := &health.AgentInfo{
@@ -331,6 +364,13 @@ func (a *EnhancedAgent) Stop() error {
 	// Disconnect from network
 	if err := a.networkClient.Disconnect(); err != nil {
 		log.Printf("⚠️ Error disconnecting from network: %v", err)
+	}
+
+	// Close cache connection
+	if a.agentCache != nil {
+		if err := a.agentCache.Close(); err != nil {
+			log.Printf("⚠️ Error closing cache connection: %v", err)
+		}
 	}
 
 	// Cleanup agent handler if it supports cleanup
@@ -469,6 +509,12 @@ func (a *EnhancedAgent) GetTaskCoordinator() *network.TaskCoordinator {
 // GetAuthManager returns the auth manager
 func (a *EnhancedAgent) GetAuthManager() *auth.Manager {
 	return a.authManager
+}
+
+// GetCache returns the agent cache instance
+// This allows agent implementations to access the cache for persistent storage
+func (a *EnhancedAgent) GetCache() cache.AgentCache {
+	return a.agentCache
 }
 
 // IsRunning returns whether the agent is currently running

@@ -75,10 +75,25 @@ func (a *OpenAIAgent) ProcessTask(ctx context.Context, task string) (string, err
 		strings.Contains(modelLower, "o1") ||
 		strings.Contains(modelLower, "o3")
 
-	// Build the request with appropriate parameters based on model
-	req := openai.ChatCompletionRequest{
-		Model: a.model,
-		Messages: []openai.ChatCompletionMessage{
+	// Build messages array
+	var messages []openai.ChatCompletionMessage
+
+	if isBetaModel {
+		// Beta models (O1, O3, GPT-5) don't support system prompts
+		// Merge system prompt into user message
+		combinedContent := task
+		if a.systemPrompt != "" {
+			combinedContent = a.systemPrompt + "\n\n" + task
+		}
+		messages = []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: combinedContent,
+			},
+		}
+	} else {
+		// Standard models support system prompts
+		messages = []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
 				Content: a.systemPrompt,
@@ -87,7 +102,13 @@ func (a *OpenAIAgent) ProcessTask(ctx context.Context, task string) (string, err
 				Role:    openai.ChatMessageRoleUser,
 				Content: task,
 			},
-		},
+		}
+	}
+
+	// Build the request with appropriate parameters based on model
+	req := openai.ChatCompletionRequest{
+		Model:    a.model,
+		Messages: messages,
 	}
 
 	// Beta models have fixed parameters - don't set temperature for them
@@ -140,10 +161,25 @@ func (a *OpenAIAgent) ProcessTaskWithStreaming(ctx context.Context, task string,
 		strings.Contains(modelLower, "o1") ||
 		strings.Contains(modelLower, "o3")
 
-	// Build the request with appropriate parameters based on model
-	req := openai.ChatCompletionRequest{
-		Model: a.model,
-		Messages: []openai.ChatCompletionMessage{
+	// Build messages array
+	var messages []openai.ChatCompletionMessage
+
+	if isBetaModel {
+		// Beta models (O1, O3, GPT-5) don't support system prompts
+		// Merge system prompt into user message
+		combinedContent := task
+		if a.systemPrompt != "" {
+			combinedContent = a.systemPrompt + "\n\n" + task
+		}
+		messages = []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: combinedContent,
+			},
+		}
+	} else {
+		// Standard models support system prompts
+		messages = []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
 				Content: a.systemPrompt,
@@ -152,8 +188,14 @@ func (a *OpenAIAgent) ProcessTaskWithStreaming(ctx context.Context, task string,
 				Role:    openai.ChatMessageRoleUser,
 				Content: task,
 			},
-		},
-		Stream: true,
+		}
+	}
+
+	// Build the request with appropriate parameters based on model
+	req := openai.ChatCompletionRequest{
+		Model:    a.model,
+		Messages: messages,
+		Stream:   true,
 	}
 
 	// Beta models have fixed parameters - don't set temperature for them

@@ -57,6 +57,13 @@ type Config struct {
 
 	// Rate limiting
 	RateLimitPerMinute int `json:"rate_limit_per_minute"` // 0 = unlimited
+
+	// Redis cache configuration
+	RedisEnabled   bool   `json:"redis_enabled"`
+	RedisAddress   string `json:"redis_address"`
+	RedisPassword  string `json:"redis_password"`
+	RedisDB        int    `json:"redis_db"`
+	RedisKeyPrefix string `json:"redis_key_prefix"`
 }
 
 // Validate validates the configuration
@@ -131,6 +138,32 @@ func (c *Config) LoadFromEnv() error {
 			c.RateLimitPerMinute = limit
 		}
 	}
+	// Redis configuration
+	if redisEnabled := os.Getenv("REDIS_ENABLED"); redisEnabled != "" {
+		if enabled, err := strconv.ParseBool(redisEnabled); err == nil {
+			c.RedisEnabled = enabled
+		}
+	}
+	if redisAddr := os.Getenv("REDIS_ADDRESS"); redisAddr != "" {
+		c.RedisAddress = redisAddr
+	}
+	// Also check REDIS_URL for convenience (common env var name)
+	if c.RedisAddress == "" {
+		if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+			c.RedisAddress = redisURL
+		}
+	}
+	if redisPass := os.Getenv("REDIS_PASSWORD"); redisPass != "" {
+		c.RedisPassword = redisPass
+	}
+	if redisDB := os.Getenv("REDIS_DB"); redisDB != "" {
+		if db, err := strconv.Atoi(redisDB); err == nil {
+			c.RedisDB = db
+		}
+	}
+	if redisPrefix := os.Getenv("REDIS_KEY_PREFIX"); redisPrefix != "" {
+		c.RedisKeyPrefix = redisPrefix
+	}
 	return nil
 }
 
@@ -157,6 +190,11 @@ func DefaultConfig() *Config {
 		MaxConcurrentTasks: 5,
 		TaskTimeout:        30,
 		TaskCheckInterval:  10,
-		RateLimitPerMinute: 0, // 0 = unlimited
+		RateLimitPerMinute: 0,
+		RedisEnabled:       false,
+		RedisAddress:       "localhost:6379",
+		RedisPassword:      "",
+		RedisDB:            0,
+		RedisKeyPrefix:     "",
 	}
 }

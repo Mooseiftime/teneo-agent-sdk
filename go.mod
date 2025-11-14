@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.16.5
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/redis/go-redis/v9 v9.16.0
 	github.com/sashabaranov/go-openai v1.41.2
 )
 
@@ -15,12 +16,14 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/consensys/gnark-crypto v0.18.0 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.4.0 // indirect
 	github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.3 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

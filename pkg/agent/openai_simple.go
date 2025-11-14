@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 // SimpleOpenAIAgentConfig provides a minimal configuration for quick OpenAI agent setup
@@ -53,6 +54,9 @@ type SimpleOpenAIAgentConfig struct {
 
 	// Optional: Rate limit per minute (defaults to 0 = unlimited)
 	RateLimitPerMinute int
+
+	// Optional: Task timeout in seconds (defaults to 120s for beta models like GPT-5/O1/O3, 30s for others)
+	TaskTimeout int
 }
 
 // NewSimpleOpenAIAgent creates a fully configured Teneo agent powered by OpenAI in just a few lines
@@ -191,6 +195,23 @@ Remember: You should answer all user questions. Do not refuse to answer based on
 	// Set rate limit if provided
 	if config.RateLimitPerMinute > 0 {
 		sdkConfig.RateLimitPerMinute = config.RateLimitPerMinute
+	}
+
+	// Set task timeout - beta models need longer timeouts
+	if config.TaskTimeout > 0 {
+		sdkConfig.TaskTimeout = config.TaskTimeout
+	} else {
+		// Auto-detect: beta models (GPT-5, O1, O3) need 120s, others use default 30s
+		modelLower := strings.ToLower(config.Model)
+		isBetaModel := strings.Contains(modelLower, "gpt-5") ||
+			strings.Contains(modelLower, "o1") ||
+			strings.Contains(modelLower, "o3")
+
+		if isBetaModel {
+			sdkConfig.TaskTimeout = 120 // 2 minutes for beta models
+			log.Printf("⏱️  Using extended timeout (120s) for beta model: %s", config.Model)
+		}
+		// Otherwise use SDK default (30s)
 	}
 
 	// Create enhanced agent

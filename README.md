@@ -263,7 +263,6 @@ type TaskResultHandler interface {
 
 **OpenAIAgent** - Like SimpleOpenAIAgent but with more configuration options. Customize the model, temperature, system prompt, and streaming behavior.
 
-
 ### Programmatic Configuration
 
 ```go
@@ -317,6 +316,9 @@ Keep responses clear and concise.`,
 
     // Optional: Join a specific room
     Room: "support",
+
+    // Optional: Rate limiting to manage costs
+    RateLimitPerMinute: 30, // Max 30 requests/minute
 })
 ```
 
@@ -389,6 +391,120 @@ When the rate limit is exceeded:
 - **Thread-safe** with mutex locks for concurrent operations
 - Applies to both incoming tasks and user messages
 - Value of `0` means unlimited (no rate limiting)
+
+## Persistent Caching with Redis
+
+The SDK includes built-in Redis support for persistent data storage across agent restarts. This enables stateful agents that can cache results, maintain session data, and coordinate across multiple instances.
+
+### Quick Start
+
+**1. Start Redis:**
+```bash
+docker run -d -p 6379:6379 redis:latest
+```
+
+**2. Enable in your `.env`:**
+```bash
+REDIS_ENABLED=true
+REDIS_ADDRESS=localhost:6379
+```
+
+**3. Use in your agent:**
+```go
+type MyAgent struct {
+    cache cache.AgentCache
+}
+
+func (a *MyAgent) Initialize(ctx context.Context, config interface{}) error {
+    if ea, ok := config.(*agent.EnhancedAgent); ok {
+        a.cache = ea.GetCache()
+    }
+    return nil
+}
+
+func (a *MyAgent) ProcessTask(ctx context.Context, task string) (string, error) {
+    // Check cache first
+    cached, err := a.cache.Get(ctx, "task:"+task)
+    if err == nil {
+        return cached, nil // Cache hit
+    }
+
+    // Process task
+    result := processTask(task)
+
+    // Cache for 5 minutes
+    a.cache.Set(ctx, "task:"+task, result, 5*time.Minute)
+
+    return result, nil
+}
+```
+
+### Features
+
+- ✅ **Automatic key prefixing** - No collisions between agents
+- ✅ **Graceful degradation** - Agent works without Redis
+- ✅ **TTL support** - Automatic expiration of cached data
+- ✅ **Rich API** - Set, Get, Increment, Locks, Pattern deletion
+- ✅ **Type-safe** - Supports strings, bytes, and JSON
+- ✅ **Production-ready** - Connection pooling, retries, timeouts
+
+### Configuration Options
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `REDIS_ENABLED` | Enable Redis caching | `false` |
+| `REDIS_ADDRESS` | Redis server address | `localhost:6379` |
+| `REDIS_PASSWORD` | Redis password | `""` |
+| `REDIS_DB` | Database number (0-15) | `0` |
+| `REDIS_KEY_PREFIX` | Custom key prefix | `teneo:agent:<name>:` |
+
+Or configure programmatically:
+```go
+config := agent.DefaultConfig()
+config.RedisEnabled = true
+config.RedisAddress = "redis.example.com:6379"
+config.RedisPassword = "secret"
+```
+
+### Common Use Cases
+
+**Cache API Responses:**
+```go
+// Avoid redundant API calls
+data, err := a.cache.Get(ctx, "api:user:123")
+if err != nil {
+    data = fetchFromAPI("123")
+    a.cache.Set(ctx, "api:user:123", data, 10*time.Minute)
+}
+```
+
+**Distributed Rate Limiting:**
+```go
+// Share rate limits across agent instances
+count, _ := a.cache.Increment(ctx, "ratelimit:user:"+userID)
+if count > 100 {
+    return errors.New("rate limit exceeded")
+}
+```
+
+**Session Management:**
+```go
+// Persist sessions across restarts
+a.cache.Set(ctx, "session:"+id, sessionData, 24*time.Hour)
+```
+
+**Distributed Locks:**
+```go
+// Coordinate across multiple instances
+acquired, _ := a.cache.SetIfNotExists(ctx, "lock:resource", "1", 30*time.Second)
+if !acquired {
+    return errors.New("resource locked")
+}
+```
+
+### Full Documentation
+
+- **[Redis Cache Guide](docs/REDIS_CACHE.md)** - Complete API reference and examples
 
 ## Advanced Features
 

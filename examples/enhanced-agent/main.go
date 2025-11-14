@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/agent"
+	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/cache"
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/types"
 	"github.com/TeneoProtocolAI/teneo-agent-sdk/pkg/version"
 	"github.com/joho/godotenv"
@@ -19,6 +20,8 @@ import (
 type ExampleAgent struct {
 	name         string
 	capabilities []string
+	cache        cache.AgentCache // Redis cache for persistent storage
+	taskCount    int64            // Track tasks processed (persisted in cache)
 }
 
 // NewExampleAgent creates a new example agent
@@ -54,6 +57,13 @@ func NewExampleAgent() *ExampleAgent {
 func (a *ExampleAgent) ProcessTask(ctx context.Context, task string) (string, error) {
 	log.Printf("🔄 Processing task: %s", task)
 
+	// Increment and persist task count
+	a.taskCount++
+	if a.cache != nil {
+		a.cache.Set(ctx, "stats:task_count", fmt.Sprintf("%d", a.taskCount), 0) // No expiration
+		a.cache.Set(ctx, "stats:last_task_time", time.Now().Format(time.RFC3339), 0)
+	}
+
 	taskLower := strings.ToLower(strings.TrimSpace(task))
 
 	// Handle help and capabilities
@@ -68,7 +78,21 @@ func (a *ExampleAgent) ProcessTask(ctx context.Context, task string) (string, er
 
 	// Text Analysis
 	if strings.Contains(taskLower, "analyze") || strings.Contains(taskLower, "analysis") {
-		return a.analyzeText(task), nil
+		// Try cache first for repeated analyses
+		cacheKey := fmt.Sprintf("analysis:%s", task)
+		if cached, err := a.cache.Get(ctx, cacheKey); err == nil {
+			log.Printf("📦 Cache HIT for analysis: %s", task)
+			return fmt.Sprintf("(CACHED) %s", cached), nil
+		}
+
+		result := a.analyzeText(task)
+
+		// Cache analysis result for 10 minutes
+		if a.cache != nil {
+			a.cache.Set(ctx, cacheKey, result, 10*time.Minute)
+		}
+
+		return result, nil
 	}
 
 	// Content Generation
@@ -98,7 +122,7 @@ func (a *ExampleAgent) ProcessTask(ctx context.Context, task string) (string, er
 
 	// System Status
 	if strings.Contains(taskLower, "status") || strings.Contains(taskLower, "health") || strings.Contains(taskLower, "system") {
-		return a.getSystemStatus(), nil
+		return a.getSystemStatus(ctx), nil
 	}
 
 	// Data Formatting
@@ -580,8 +604,33 @@ func (a *ExampleAgent) getTimeInfo(task string) string {
 }
 
 // getSystemStatus provides system health information
-func (a *ExampleAgent) getSystemStatus() string {
+func (a *ExampleAgent) getSystemStatus(ctx context.Context) string {
 	uptime := time.Since(time.Now().Add(-time.Hour * 2)) // Mock uptime
+
+	// Get cache statistics
+	cacheStatus := "❌ Not Available"
+	cacheHits := "N/A"
+	cacheMisses := "N/A"
+	lastTaskTime := "N/A"
+
+	if a.cache != nil {
+		if err := a.cache.Ping(ctx); err == nil {
+			cacheStatus = "✅ Connected"
+
+			// Get cache hit/miss stats if available
+			if hits, err := a.cache.Get(ctx, "stats:cache_hits"); err == nil {
+				cacheHits = hits
+			}
+			if misses, err := a.cache.Get(ctx, "stats:cache_misses"); err == nil {
+				cacheMisses = misses
+			}
+			if lastTime, err := a.cache.Get(ctx, "stats:last_task_time"); err == nil {
+				lastTaskTime = lastTime
+			}
+		} else {
+			cacheStatus = "⚠️  Disconnected"
+		}
+	}
 
 	return fmt.Sprintf(`🔧 **System Status & Health:**
 
@@ -598,19 +647,31 @@ func (a *ExampleAgent) getSystemStatus() string {
    • WebSocket: Connected
    • Authentication: Verified
 
+🗄️  **Cache Status:**
+   • Redis Cache: %s
+   • Cache Hits: %s
+   • Cache Misses: %s
+   • Last Task: %s
+
 🔋 **Capabilities Status:**
-   • Text Analysis: ✅ Active
+   • Text Analysis: ✅ Active (with caching)
    • Content Generation: ✅ Active
    • Code Assistance: ✅ Active
    • Math Calculations: ✅ Active
    • All Systems: ✅ Operational
 
 📊 **Statistics:**
-   • Tasks Processed: 47
+   • Tasks Processed: %d
    • Success Rate: 98.5%%
    • Avg Response Time: 1.2s
 
-🚀 **Ready to assist with any task!**`, uptime.Round(time.Second))
+🚀 **Ready to assist with any task!**`,
+		uptime.Round(time.Second),
+		cacheStatus,
+		cacheHits,
+		cacheMisses,
+		lastTaskTime,
+		a.taskCount)
 }
 
 // formatData handles data formatting requests
@@ -1354,6 +1415,26 @@ The content has been generated progressively, allowing you to see the developmen
 func (a *ExampleAgent) Initialize(ctx context.Context, config interface{}) error {
 	log.Printf("🔧 Initializing %s with configuration", a.name)
 
+	// Get cache from enhanced agent
+	if enhancedAgent, ok := config.(*agent.EnhancedAgent); ok {
+		a.cache = enhancedAgent.GetCache()
+
+		// Test cache connectivity
+		if err := a.cache.Ping(ctx); err != nil {
+			log.Printf("⚠️  Cache not available: %v (continuing without cache)", err)
+		} else {
+			log.Println("✅ Cache connection verified!")
+
+			// Load previous task count from cache
+			if countStr, err := a.cache.Get(ctx, "stats:task_count"); err == nil {
+				if count, err := strconv.ParseInt(countStr, 10, 64); err == nil {
+					a.taskCount = count
+					log.Printf("📊 Restored task count from cache: %d", a.taskCount)
+				}
+			}
+		}
+	}
+
 	// Perform any initialization tasks here
 	// For example: connecting to databases, loading models, etc.
 
@@ -1364,6 +1445,13 @@ func (a *ExampleAgent) Initialize(ctx context.Context, config interface{}) error
 // Cleanup implements the AgentCleaner interface
 func (a *ExampleAgent) Cleanup(ctx context.Context) error {
 	log.Printf("🧹 Cleaning up %s", a.name)
+
+	// Save final statistics to cache
+	if a.cache != nil {
+		a.cache.Set(ctx, "stats:task_count", fmt.Sprintf("%d", a.taskCount), 0)
+		a.cache.Set(ctx, "stats:last_shutdown", time.Now().Format(time.RFC3339), 0)
+		log.Printf("💾 Saved final statistics to cache (task count: %d)", a.taskCount)
+	}
 
 	// Perform cleanup tasks here
 	// For example: closing connections, saving state, etc.
@@ -1435,10 +1523,23 @@ func main() {
 		"streaming_responses",
 		"multi_message_tasks",
 	}
-	config.WebSocketURL = "ws://localhost:8080/ws"
 	config.HealthEnabled = true
 	config.HealthPort = 8090
 	config.PrivateKey = os.Getenv("PRIVATE_KEY")
+
+	// Redis cache configuration (optional)
+	// Enable Redis for persistent caching across restarts
+	if os.Getenv("REDIS_ENABLED") == "true" {
+		config.RedisEnabled = true
+		config.RedisAddress = os.Getenv("REDIS_ADDRESS")
+		if config.RedisAddress == "" {
+			config.RedisAddress = "localhost:6379" // Default
+		}
+		config.RedisPassword = os.Getenv("REDIS_PASSWORD")
+		log.Printf("🗄️  Redis cache enabled at: %s", config.RedisAddress)
+	} else {
+		log.Printf("ℹ️  Redis cache disabled (set REDIS_ENABLED=true to enable)")
+	}
 
 	// Validate required environment variables
 	if config.PrivateKey == "" {
