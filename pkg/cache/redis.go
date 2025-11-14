@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -21,6 +22,9 @@ type RedisCache struct {
 type RedisConfig struct {
 	// Address is the Redis server address (e.g., "localhost:6379")
 	Address string
+
+	// Username is the Redis ACL username (Redis 6+, empty for legacy auth)
+	Username string
 
 	// Password is the Redis password (empty if no password)
 	Password string
@@ -45,12 +49,16 @@ type RedisConfig struct {
 
 	// PoolSize is the maximum number of socket connections
 	PoolSize int
+
+	// UseTLS enables TLS/SSL for the Redis connection (required for managed Redis like DigitalOcean)
+	UseTLS bool
 }
 
 // DefaultRedisConfig returns a default Redis configuration
 func DefaultRedisConfig() *RedisConfig {
 	return &RedisConfig{
 		Address:      "localhost:6379",
+		Username:     "", // Empty for legacy auth or default user
 		Password:     "",
 		DB:           0,
 		KeyPrefix:    "teneo:agent:",
@@ -59,6 +67,7 @@ func DefaultRedisConfig() *RedisConfig {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 		PoolSize:     10,
+		UseTLS:       false,
 	}
 }
 
@@ -68,8 +77,9 @@ func NewRedisCache(config *RedisConfig) (*RedisCache, error) {
 		config = DefaultRedisConfig()
 	}
 
-	client := redis.NewClient(&redis.Options{
+	options := &redis.Options{
 		Addr:         config.Address,
+		Username:     config.Username, // Redis 6+ ACL username
 		Password:     config.Password,
 		DB:           config.DB,
 		MaxRetries:   config.MaxRetries,
@@ -77,7 +87,16 @@ func NewRedisCache(config *RedisConfig) (*RedisCache, error) {
 		ReadTimeout:  config.ReadTimeout,
 		WriteTimeout: config.WriteTimeout,
 		PoolSize:     config.PoolSize,
-	})
+	}
+
+	// Enable TLS if requested (required for managed Redis like DigitalOcean, AWS ElastiCache, etc.)
+	if config.UseTLS {
+		options.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+
+	client := redis.NewClient(options)
 
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

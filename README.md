@@ -453,17 +453,36 @@ func (a *MyAgent) ProcessTask(ctx context.Context, task string) (string, error) 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
 | `REDIS_ENABLED` | Enable Redis caching | `false` |
-| `REDIS_ADDRESS` | Redis server address | `localhost:6379` |
+| `REDIS_ADDRESS` | Redis server address (host:port) | `localhost:6379` |
+| `REDIS_USERNAME` | Redis ACL username (Redis 6+) | `""` |
 | `REDIS_PASSWORD` | Redis password | `""` |
+| `REDIS_USE_TLS` | Enable TLS/SSL connection | `false` |
 | `REDIS_DB` | Database number (0-15) | `0` |
 | `REDIS_KEY_PREFIX` | Custom key prefix | `teneo:agent:<name>:` |
+
+**Local Redis:**
+```bash
+REDIS_ENABLED=true
+REDIS_ADDRESS=localhost:6379
+```
+
+**Managed Redis (DigitalOcean, AWS, etc.):**
+```bash
+REDIS_ENABLED=true
+REDIS_ADDRESS=your-redis-host.com:25061
+REDIS_USERNAME=default
+REDIS_PASSWORD=your-password
+REDIS_USE_TLS=true
+```
 
 Or configure programmatically:
 ```go
 config := agent.DefaultConfig()
 config.RedisEnabled = true
 config.RedisAddress = "redis.example.com:6379"
+config.RedisUsername = "agentuser"  // Redis 6+ ACL username
 config.RedisPassword = "secret"
+config.RedisUseTLS = true  // For managed Redis
 ```
 
 ### Common Use Cases

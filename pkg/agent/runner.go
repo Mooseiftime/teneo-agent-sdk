@@ -216,9 +216,11 @@ func NewEnhancedAgent(config *EnhancedAgentConfig) (*EnhancedAgent, error) {
 
 		redisConfig := &cache.RedisConfig{
 			Address:   config.Config.RedisAddress,
+			Username:  config.Config.RedisUsername,
 			Password:  config.Config.RedisPassword,
 			DB:        config.Config.RedisDB,
 			KeyPrefix: keyPrefix,
+			UseTLS:    config.Config.RedisUseTLS,
 		}
 
 		redisCache, err := cache.NewRedisCache(redisConfig)

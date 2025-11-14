@@ -59,11 +59,13 @@ type Config struct {
 	RateLimitPerMinute int `json:"rate_limit_per_minute"` // 0 = unlimited
 
 	// Redis cache configuration
-	RedisEnabled   bool   `json:"redis_enabled"`
-	RedisAddress   string `json:"redis_address"`
-	RedisPassword  string `json:"redis_password"`
-	RedisDB        int    `json:"redis_db"`
-	RedisKeyPrefix string `json:"redis_key_prefix"`
+	RedisEnabled   bool   `json:"redis_enabled"`    // Enable Redis caching
+	RedisAddress   string `json:"redis_address"`    // Redis server address (e.g., "localhost:6379")
+	RedisUsername  string `json:"redis_username"`   // Redis ACL username (Redis 6+, empty for legacy auth)
+	RedisPassword  string `json:"redis_password"`   // Redis password (empty if no password)
+	RedisDB        int    `json:"redis_db"`         // Redis database number (0-15)
+	RedisKeyPrefix string `json:"redis_key_prefix"` // Prefix for all cache keys
+	RedisUseTLS    bool   `json:"redis_use_tls"`    // Enable TLS/SSL (required for managed Redis)
 }
 
 // Validate validates the configuration
@@ -153,6 +155,9 @@ func (c *Config) LoadFromEnv() error {
 			c.RedisAddress = redisURL
 		}
 	}
+	if redisUser := os.Getenv("REDIS_USERNAME"); redisUser != "" {
+		c.RedisUsername = redisUser
+	}
 	if redisPass := os.Getenv("REDIS_PASSWORD"); redisPass != "" {
 		c.RedisPassword = redisPass
 	}
@@ -163,6 +168,11 @@ func (c *Config) LoadFromEnv() error {
 	}
 	if redisPrefix := os.Getenv("REDIS_KEY_PREFIX"); redisPrefix != "" {
 		c.RedisKeyPrefix = redisPrefix
+	}
+	if redisTLS := os.Getenv("REDIS_USE_TLS"); redisTLS != "" {
+		if useTLS, err := strconv.ParseBool(redisTLS); err == nil {
+			c.RedisUseTLS = useTLS
+		}
 	}
 	return nil
 }
@@ -190,11 +200,13 @@ func DefaultConfig() *Config {
 		MaxConcurrentTasks: 5,
 		TaskTimeout:        30,
 		TaskCheckInterval:  10,
-		RateLimitPerMinute: 0,
+		RateLimitPerMinute: 0, // 0 = unlimited
 		RedisEnabled:       false,
 		RedisAddress:       "localhost:6379",
+		RedisUsername:      "", // Empty for legacy auth or default user
 		RedisPassword:      "",
 		RedisDB:            0,
-		RedisKeyPrefix:     "",
+		RedisKeyPrefix:     "", // Will be set to "teneo:agent:<agent_name>:" if empty
+		RedisUseTLS:        false,
 	}
 }
